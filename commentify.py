@@ -2,15 +2,16 @@
 """
 A simple command-line utility for formatting text in the clipboard. Primary 
 use-cases are removing line-breaks from copied text (ie from a PDF), and adding
-line breaks to make text suitable as code comments.
+line breaks to make text suitable as code comments. 
 """
 
 import argparse
 import pyperclip
 
 
-START_BLOCK_COMMENT = {"py": '"""', "js": "/**"}
-END_BLOCK_COMMENT = {"py": '"""', "js": " */"}
+START_BLOCK_COMMENT = {'py': '"""', 'js': '/**'}
+END_BLOCK_COMMENT = {'py': '"""', 'js': ' */'}
+LINE_COMMENT = {'py': '# ', 'js': '// '}
 
 
 def python_line():
@@ -33,15 +34,15 @@ def python_line():
 
 
 def block(text, comment_style, max=80):
-
+    """Reflow text to fit max column width and add selected delimiters."""
     text = text.replace('\n', ' ')
     text = text.split(' ')
     new_text = ['']
     if comment_style:
-        new_text[0] = new_text[0] + \
-            START_BLOCK_COMMENT[comment_style] + '\n * '
+        new_text[0] += START_BLOCK_COMMENT[comment_style] + '\n'
     if comment_style == "js":
         max -= 3
+        new_text[0] += ' * '
     line = 0
 
     for word in text:
@@ -62,6 +63,12 @@ def block(text, comment_style, max=80):
     return new_text
 
 
+def remove_line_breaks(text):
+    new_text = text.replace('\n', ' ')
+    print(new_text)
+    return new_text
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -70,7 +77,7 @@ def main():
         action='store_true',
         default=False,
         dest='python',
-        help='Output as Python-style comments (# or """). Default block comment'
+        help='output as Python-style comments (# or """). Default block comment'
         + 'style. Use option --line-comments (-l) for line comments.'
     )
     parser.add_argument(
@@ -79,7 +86,7 @@ def main():
         action='store_true',
         default=False,
         dest="javascript",
-        help='Output as JavaScript-style comments (// or /* */). Default block '
+        help='output as JavaScript-style comments (// or /* */). Default block '
         + 'comment style. Use option --line-comments (-l) for line comment style.',
     )
     parser.add_argument(
@@ -87,12 +94,12 @@ def main():
         '--line-comments',
         action='store_true',
         default=False,
-        help='Output as line comments.',
+        help='output as line comments',
     )
     parser.add_argument(
         '-b',
         '--block-comments',
-        help='Output as block comments. (Default.)',
+        help='output as block comments (default)',
         default=True,
         action='store_true'
     )
@@ -102,12 +109,12 @@ def main():
         action='store',
         default=80,
         dest="max_lines",
-        help='insert newlines after specified maximum line length, default 80',
+        help='insert newlines after specified maximum line length (default 80)',
     )
     parser.add_argument(
         '-r',
         '--remove',
-        help='remove line breaks from text. incompatible with comment style options',
+        help='remove line breaks from text. Incompatible with comment style options',
         action='store_true'
     )
     parser.add_argument(
@@ -122,7 +129,9 @@ def main():
 
     text = pyperclip.paste()
 
-    if args.block:
+    if args.remove:
+        pyperclip.copy(remove_line_breaks(text))
+    elif args.block_comments:
         if args.python:
             comment_style = "py"
         elif args.javascript:
