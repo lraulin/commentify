@@ -14,26 +14,26 @@ END_BLOCK_COMMENT = {'py': '"""', 'js': ' */'}
 LINE_COMMENT = {'py': '# ', 'js': '// '}
 
 
-def python_line():
-    text = pyperclip.paste()
-    print(text)
+def line_comments(text, style, max=79):
     text = text.split(' ')
-    new_text = ['#']
+    new_text = ['']
+    new_text += LINE_COMMENT[style]
     line = 0
 
     for word in text:
-        if len(new_text[line] + word) >= 80:
+        if len(new_text[line] + word) >= max:
             new_text[line] += '\n'
             line += 1
-            new_text.append("# " + word)
+            new_text.append(LINE_COMMENT[style] + word)
         else:
             new_text[line] += ' ' + word
 
     new_text = ''.join(new_text)
-    pyperclip.copy(new_text)
+    print(new_text)
+    return new_text
 
 
-def block(text, comment_style, max=80):
+def block(text, comment_style, max=79):
     """Reflow text to fit max column width and add selected delimiters."""
     text = text.replace('\n', ' ')
     text = text.split(' ')
@@ -86,8 +86,9 @@ def main():
         action='store_true',
         default=False,
         dest="javascript",
-        help='output as JavaScript-style comments (// or /* */). Default block '
-        + 'comment style. Use option --line-comments (-l) for line comment style.',
+        help='output as JavaScript-style comments (// or /* */). Default block'
+        + 'comment style. Use option --line-comments (-l) for line comment '
+        + 'style.',
     )
     parser.add_argument(
         '-l',
@@ -109,12 +110,14 @@ def main():
         action='store',
         default=80,
         dest="max_lines",
-        help='insert newlines after specified maximum line length (default 80)',
+        help='insert newlines after specified maximum line length '
+        + '(default 80)',
     )
     parser.add_argument(
         '-r',
         '--remove',
-        help='remove line breaks from text. Incompatible with comment style options',
+        help='remove line breaks from text. Incompatible with comment style '
+        + 'options',
         action='store_true'
     )
     parser.add_argument(
@@ -129,15 +132,18 @@ def main():
 
     text = pyperclip.paste()
 
+    if args.python:
+        comment_style = "py"
+    elif args.javascript:
+        comment_style = "js"
+    else:
+        comment_style = None
+
     if args.remove:
         pyperclip.copy(remove_line_breaks(text))
+    elif args.line_comments:
+        pyperclip.copy(line_comments(text, comment_style, args.max_lines))
     elif args.block_comments:
-        if args.python:
-            comment_style = "py"
-        elif args.javascript:
-            comment_style = "js"
-        else:
-            comment_style = None
         pyperclip.copy(block(text, comment_style, args.max_lines))
 
 
