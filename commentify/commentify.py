@@ -16,6 +16,17 @@ END_BLOCK_COMMENT = {'py': '"""', 'js': ' */'}
 LINE_COMMENT = {'py': '# ', 'js': '// '}
 
 
+def quote(text):
+    paragraphs = []
+    for paragraph in text.split('\n'):
+        if len(paragraph):
+            while paragraph[-1] == ' ':
+                paragraph = paragraph[:-1]
+            paragraphs.append('"' + paragraph + '"')
+    quoted_text = "\n\n".join(paragraphs)
+    return quoted_text
+
+
 def line_comments(text, style, indent, max=79):
     max -= indent
     indent = ' ' * indent
@@ -157,6 +168,12 @@ def main():
     indent = args.indent * 4 if args.indent else 0
 
     text = pyperclip.paste()
+
+    if args.quote:
+        output = quote(text)
+        print(output)
+        pyperclip.copy(output)
+        exit()
 
     if args.python:
         comment_style = "py"
